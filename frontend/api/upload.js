@@ -38,6 +38,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       secure_url: uploadResult.secure_url,
+      public_id: uploadResult.public_id,
       format: uploadResult.format || 'raw',
       resource_type: uploadResult.resource_type
     });

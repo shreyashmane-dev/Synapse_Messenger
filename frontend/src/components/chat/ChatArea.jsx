@@ -148,13 +148,14 @@ export default function ChatArea({ activeChat, currentUser, displayName, onBack 
     try {
       if (localFile) {
          setUploading(true);
-         const uploader = await uploadMediaCloudinary(localFile);
-         mediaPack = {
-            url: uploader.secure_url,
-            type: uploader.resource_type === 'raw' || !localFile.type.startsWith('image') ? 'raw' : 'image',
-            name: localFile.name
-         };
-         setUploading(false);
+          const uploader = await uploadMediaCloudinary(localFile);
+          mediaPack = {
+             url: uploader.secure_url,
+             public_id: uploader.public_id,
+             type: uploader.resource_type === 'raw' || !localFile.type.startsWith('image') ? 'raw' : 'image',
+             name: localFile.name
+          };
+          setUploading(false);
       }
 
       const userDoc = await getDoc(doc(db, 'users', userId));
@@ -235,12 +236,55 @@ export default function ChatArea({ activeChat, currentUser, displayName, onBack 
   };
 
   const deleteMessage = async (msgId, forEveryone = false) => {
-     if (forEveryone) {
-        await updateDoc(doc(db, 'messages', msgId), { content: '🚫 This message was retracted.', mediaData: null, isDeleted: true });
-     } else {
-        // Local only hide is harder with simple Firestore sync, usually we do server-side filters
-        await updateDoc(doc(db, 'messages', msgId), { hiddenFor: [userId] }); 
-     }
+     try {
+       const msgRef = doc(db, 'messages', msgId);
+       const msgSnap = await getDoc(msgRef);
+       if (!msgSnap.exists()) return;
+       const msgData = msgSnap.data();
+
+       // Media cleanup protocol
+       if (forEveryone && msgData.mediaData?.public_id) {
+          try {
+             await fetch('/api/delete_media', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ publicId: msgData.mediaData.public_id, resourceType: msgData.mediaData.type })
+             });
+          } catch (err) { console.error("Cloudinary Cleanup failed", err); }
+       }
+
+       if (forEveryone) {
+          await updateDoc(msgRef, { 
+             content: '🚫 This message was retracted.', 
+             mediaData: null, 
+             isDeleted: true,
+             isRetracted: true 
+          });
+       } else {
+          // Hard delete for local cleanup if needed or soft-hide
+          await updateDoc(msgRef, { hiddenFor: [userId] }); 
+       }
+     } catch (err) { console.error(err); }
+  };
+
+  const deleteChat = async () => {
+     if(!confirm("TERMINATE THIS CHAT? All messages and attachments will be destroyed.")) return;
+     try {
+        // 1. Delete all messages associated with the chat
+        const q = query(collection(db, 'messages'), where('chatId', '==', activeChat.id));
+        const snapshots = await getDocs(q);
+        snapshots.forEach(async (d) => {
+           const dat = d.data();
+           if(dat.mediaData?.public_id) {
+              fetch('/api/delete_media', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ publicId: dat.mediaData.public_id, resourceType: dat.mediaData.type }) });
+           }
+           await deleteDoc(doc(db, 'messages', d.id));
+        });
+
+        // 2. Delete the chat document itself
+        await deleteDoc(doc(db, 'chats', activeChat.id));
+        onBack();
+     } catch (err) { console.error(err); }
   };
 
   const togglePin = async (msgId, currentState) => {
@@ -503,6 +547,16 @@ export default function ChatArea({ activeChat, currentUser, displayName, onBack 
                        {msg.senderId === userId && (
                           msg.status === 'read' ? <div className="flex"><Check size={10}/><Check size={10} className="-ml-1"/></div> : <Check size={10}/>
                        )}
+                                        {/* Only sender can delete for everyone */}
+                                 {msg.senderId === userId && !msg.isDeleted && (
+                                    <button 
+                                       onClick={() => deleteMessage(msg.id, true)} 
+                                       className="p-1 hover:bg-red-500/10 text-red-400 rounded transition-colors"
+                                       title="Retract Message"
+                                    >
+                                       <Trash2 size={12} />
+                                    </button>
+                                 )}
                     </div>
 
                     {/* Rendered Reactions */}
@@ -712,6 +766,15 @@ export default function ChatArea({ activeChat, currentUser, displayName, onBack 
                 />
                 
                 <div className="pr-2 flex items-center gap-2">
+                   {activeChat.type === 'dm' && (
+                      <button 
+                         onClick={deleteChat}
+                         className="p-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl transition-all border border-red-500/20 group"
+                         title="Terminate Sequence"
+                      >
+                         <Trash2 size={18} className="group-hover:scale-110 transition-transform"/>
+                      </button>
+                   )}
                    <button 
                       onClick={() => setShowAIActions(!showAIActions)}
                       className="p-2 text-secondary bg-secondary/10 hover:bg-secondary/20 rounded-xl transition-all w-10 h-10 flex flex-col items-center justify-center shadow-sm"

@@ -68,8 +68,32 @@ export default function CommunitySettings({ communityId, communityName, myRole, 
 
   const destroyCommunity = async () => {
       if (!window.confirm("FATAL: Destroy whole community? This cannot be undone.")) return;
-      await deleteDoc(doc(db, 'communities', communityId));
-      onClose();
+      try {
+          // 1. Purge all channels and their messages
+          for (const ch of channels) {
+             const qM = query(collection(db, 'messages'), where('chatId', '==', ch.id));
+             const mSnap = await getDocs(qM);
+             for (const mDoc of mSnap.docs) {
+                const mData = mDoc.data();
+                if (mData.mediaData?.public_id) {
+                   fetch('/api/delete_media', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ publicId: mData.mediaData.public_id, resourceType: mData.mediaData.type }) });
+                }
+                await deleteDoc(doc(db, 'messages', mDoc.id));
+             }
+             await deleteDoc(doc(db, 'channels', ch.id));
+          }
+
+          // 2. Purge all member mappings
+          const qMM = query(collection(db, 'community_members'), where('communityId', '==', communityId));
+          const mmSnap = await getDocs(qMM);
+          for (const mmDoc of mmSnap.docs) {
+             await deleteDoc(doc(db, 'community_members', mmDoc.id));
+          }
+
+          // 3. Purge community itself
+          await deleteDoc(doc(db, 'communities', communityId));
+          onClose();
+      } catch (err) { console.error("Purge failure", err); }
   };
 
   return (

@@ -212,23 +212,30 @@ export default function FloatingLandingPage() {
           </section>
 
           {/* 5. FINAL TERMINAL / CTA */}
-          <section className="h-screen w-full flex items-center justify-center relative z-30 snap-start shrink-0">
-             <div className="text-center">
-                <motion.h2 
-                   initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }}
-                   className="text-5xl md:text-7xl font-display font-black mb-12 tracking-tight text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]"
-                >
-                   Start talking differently.
-                </motion.h2>
+           <section className="h-screen w-full flex flex-col items-center justify-center relative z-30 snap-start shrink-0">
+              <div className="text-center">
+                 <motion.h2 
+                    initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} transition={{ duration: 1 }}
+                    className="text-5xl md:text-7xl font-display font-black mb-12 tracking-tight text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]"
+                 >
+                    Start talking differently.
+                 </motion.h2>
 
-                <Link to="/auth" className="relative group inline-block">
-                   <div className="absolute inset-0 bg-primary/40 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                   <div className="relative z-10 px-12 py-5 bg-white text-black font-extrabold text-xl tracking-widest rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)]">
-                      Enter Synapse
-                   </div>
-                </Link>
-             </div>
-          </section>
+                 <Link to="/auth" className="relative group inline-block">
+                    <div className="absolute inset-0 bg-primary/40 blur-xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                    <div className="relative z-10 px-12 py-5 bg-white text-black font-extrabold text-xl tracking-widest rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)]">
+                       Enter Synapse
+                    </div>
+                 </Link>
+              </div>
+
+              {/* FOOTER AUTHORSHIP */}
+              <footer className="absolute bottom-10 left-0 right-0 text-center opacity-30 hover:opacity-100 transition-opacity duration-500">
+                 <div className="text-[10px] font-bold uppercase tracking-[0.4em] text-gray-500">
+                    Architected & Deployed by <span className="text-primary">shreyashmane-dev</span>
+                 </div>
+              </footer>
+           </section>
 
        </main>
     </div>
