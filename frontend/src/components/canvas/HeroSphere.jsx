@@ -38,7 +38,9 @@ export function HeroSphere() {
 
 function Particles() {
   const ref = useRef();
-  const sphere = random.inSphere(new Float32Array(5000), { radius: 3.5 });
+  // Using 15000 instead of 5000 because each point has 3 coordinates (X, Y, Z). 
+  // Non-divisible numbers result in NaN errors during computeBoundingSphere()
+  const sphere = random.inSphere(new Float32Array(15000), { radius: 3.5 });
 
   useFrame((state, delta) => {
     ref.current.rotation.x -= delta / 10;
