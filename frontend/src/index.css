@@ -1,0 +1,63 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-surface text-gray-200 font-sans antialiased selection:bg-primary/30 selection:text-white;
+    margin: 0;
+    overflow-x: hidden;
+  }
+
+  /* Custom Scrollbar Architecture */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(188, 19, 254, 0.1);
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(188, 19, 254, 0.3);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight text-white;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface-container-highest/40 backdrop-blur-2xl;
+  }
+
+  .glass-button {
+    @apply border border-outline-variant/30 bg-surface-container-high/50 hover:bg-surface-container-high transition-colors text-white;
+  }
+
+  .primary-gradient-btn {
+    @apply bg-gradient-to-r from-primary to-primary-dim hover:to-primary transition-all duration-300 text-black font-medium shadow-[0_0_20px_rgba(188,19,254,0.3)] hover:shadow-[0_0_30px_rgba(188,19,254,0.5)];
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-dim;
+  }
+}
+
+html.light-theme {
+  filter: invert(1) hue-rotate(180deg);
+  background: white;
+}
+
+html.light-theme img, html.light-theme video {
+  filter: invert(1) hue-rotate(-180deg);
+}
